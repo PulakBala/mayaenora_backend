@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\InventoryLogs;
 
+use App\Filament\Resources\InventoryLogs\Pages\CreateInventoryLog;
 use App\Filament\Resources\InventoryLogs\Pages\ListInventoryLogs;
+use App\Filament\Resources\InventoryLogs\Schemas\InventoryLogForm;
 use App\Filament\Resources\InventoryLogs\Tables\InventoryLogsTable;
 use App\Models\InventoryLog;
 use BackedEnum;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
@@ -20,9 +23,15 @@ class InventoryLogResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    public static function canCreate(): bool
+    protected static ?string $navigationLabel = 'Inventory Logs & Stock Adjustment';
+
+    protected static ?string $modelLabel = 'Stock Adjustment / Log';
+
+    protected static ?string $pluralModelLabel = 'Inventory Logs & Stock Adjustments';
+
+    public static function form(Schema $schema): Schema
     {
-        return false;
+        return InventoryLogForm::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -39,6 +48,7 @@ class InventoryLogResource extends Resource
     {
         return [
             'index' => ListInventoryLogs::route('/'),
+            'create' => CreateInventoryLog::route('/create'),
         ];
     }
 }

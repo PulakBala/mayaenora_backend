@@ -28,8 +28,9 @@ class PurchaseForm
                                 ->preload()
                                 ->required(),
 
-                            TextInput::make('invoice_number')
-                                ->label('Supplier Bill / Invoice #')
+                            TextInput::make('reference_no')
+                                ->label('Supplier Bill / Reference #')
+                                ->default(fn () => 'PUR-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4)))
                                 ->required()
                                 ->maxLength(60)
                                 ->unique(ignoreRecord: true),
@@ -40,18 +41,45 @@ class PurchaseForm
                                 ->required(),
                         ]),
 
-                        Grid::make(3)->schema([
-                            TextInput::make('total_amount')
+                        Grid::make(4)->schema([
+                            TextInput::make('total_cost')
                                 ->label('Total Invoice Cost')
                                 ->numeric()
                                 ->prefix('৳')
-                                ->required(),
+                                ->required()
+                                ->live()
+                                ->afterStateUpdated(function (callable $get, callable $set) {
+                                    $total = (float) ($get('total_cost') ?: 0);
+                                    $paid = (float) ($get('paid_amount') ?: 0);
+                                    $set('due_amount', max(0, $total - $paid));
+                                }),
 
                             TextInput::make('paid_amount')
                                 ->label('Paid Amount')
                                 ->numeric()
                                 ->prefix('৳')
-                                ->default(0.00),
+                                ->default(0.00)
+                                ->live()
+                                ->afterStateUpdated(function (callable $get, callable $set) {
+                                    $total = (float) ($get('total_cost') ?: 0);
+                                    $paid = (float) ($get('paid_amount') ?: 0);
+                                    $due = max(0, $total - $paid);
+                                    $set('due_amount', $due);
+                                    if ($paid >= $total && $total > 0) {
+                                        $set('payment_status', 'paid');
+                                    } elseif ($paid > 0) {
+                                        $set('payment_status', 'partial');
+                                    } else {
+                                        $set('payment_status', 'due');
+                                    }
+                                }),
+
+                            TextInput::make('due_amount')
+                                ->label('Due Amount')
+                                ->numeric()
+                                ->prefix('৳')
+                                ->default(0.00)
+                                ->readOnly(),
 
                             Select::make('payment_status')
                                 ->options([
@@ -59,7 +87,7 @@ class PurchaseForm
                                     'partial' => 'Partially Paid',
                                     'due' => 'Payment Due',
                                 ])
-                                ->default('paid')
+                                ->default('due')
                                 ->required(),
                         ]),
 
@@ -70,6 +98,7 @@ class PurchaseForm
                     ]),
 
                 Section::make('Purchased Line Items & Stock Receiving')
+                    ->description('Add purchased products and quantities. Stock will automatically increase upon voucher creation.')
                     ->schema([
                         Repeater::make('items')
                             ->relationship('items')
@@ -81,34 +110,74 @@ class PurchaseForm
                                     ->preload()
                                     ->required()
                                     ->live()
-                                    ->columnSpan(2),
+                                    ->afterStateUpdated(function (callable $set) {
+                                        $set('product_variant_id', null);
+                                    })
+                                    ->columnSpan(3),
 
                                 Select::make('product_variant_id')
                                     ->label('Variant (Size/Color)')
-                                    ->options(fn (callable $get) => ProductVariant::where('product_id', $get('product_id'))->get()->mapWithKeys(fn ($v) => [
-                                        $v->id => "{$v->variant_sku} - " . trim("{$v->size} {$v->color}"),
-                                    ]))
+                                    ->options(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (! $productId) return [];
+                                        return ProductVariant::where('product_id', $productId)->get()->mapWithKeys(function ($v) {
+                                            $details = trim("{$v->size} {$v->color}");
+                                            $label = $v->variant_sku . ($details ? " ({$details})" : '');
+                                            return [$v->id => $label];
+                                        });
+                                    })
                                     ->required()
-                                    ->columnSpan(2),
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        if ($state) {
+                                            $variant = ProductVariant::find($state);
+                                            if ($variant && $variant->cost_price > 0) {
+                                                $set('unit_cost', $variant->cost_price);
+                                                $qty = (float) ($get('quantity') ?: 1);
+                                                $set('subtotal', round($qty * $variant->cost_price, 2));
+                                            }
+                                        }
+                                    })
+                                    ->columnSpan(3),
 
                                 TextInput::make('quantity')
                                     ->label('Qty Received')
                                     ->numeric()
                                     ->required()
-                                    ->minValue(1),
+                                    ->default(1)
+                                    ->minValue(1)
+                                    ->live()
+                                    ->afterStateUpdated(function (callable $get, callable $set) {
+                                        $qty = (float) ($get('quantity') ?: 0);
+                                        $cost = (float) ($get('unit_cost') ?: 0);
+                                        $set('subtotal', round($qty * $cost, 2));
+                                    })
+                                    ->columnSpan(2),
 
-                                TextInput::make('unit_cost_price')
+                                TextInput::make('unit_cost')
                                     ->label('Unit Cost (৳)')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->default(0.00)
+                                    ->live()
+                                    ->afterStateUpdated(function (callable $get, callable $set) {
+                                        $qty = (float) ($get('quantity') ?: 0);
+                                        $cost = (float) ($get('unit_cost') ?: 0);
+                                        $set('subtotal', round($qty * $cost, 2));
+                                    })
+                                    ->columnSpan(2),
 
                                 TextInput::make('subtotal')
                                     ->label('Subtotal (৳)')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->default(0.00)
+                                    ->columnSpan(2),
                             ])
-                            ->columns(7)
-                            ->columnSpanFull(),
+                            ->columns(12)
+                            ->columnSpanFull()
+                            ->reorderableWithButtons()
+                            ->defaultItems(1),
                     ]),
             ]);
     }

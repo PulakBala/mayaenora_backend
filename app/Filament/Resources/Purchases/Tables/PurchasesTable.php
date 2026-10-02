@@ -15,8 +15,8 @@ class PurchasesTable
     {
         return $table
             ->columns([
-                TextColumn::make('invoice_number')
-                    ->label('Bill / Invoice #')
+                TextColumn::make('reference_no')
+                    ->label('Bill / Reference #')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
@@ -31,7 +31,7 @@ class PurchasesTable
                     ->date('d M Y')
                     ->sortable(),
 
-                TextColumn::make('total_amount')
+                TextColumn::make('total_cost')
                     ->label('Total Cost')
                     ->money('BDT')
                     ->sortable()
@@ -39,7 +39,14 @@ class PurchasesTable
 
                 TextColumn::make('paid_amount')
                     ->label('Paid')
-                    ->money('BDT'),
+                    ->money('BDT')
+                    ->sortable(),
+
+                TextColumn::make('due_amount')
+                    ->label('Due')
+                    ->money('BDT')
+                    ->color(fn ($state) => $state > 0 ? 'danger' : 'gray')
+                    ->sortable(),
 
                 TextColumn::make('payment_status')
                     ->badge()
@@ -48,6 +55,12 @@ class PurchasesTable
                         'partial' => 'warning',
                         'due' => 'danger',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'paid' => 'Fully Paid',
+                        'partial' => 'Partially Paid',
+                        'due' => 'Payment Due',
+                        default => ucfirst($state),
                     }),
 
                 TextColumn::make('items_count')
