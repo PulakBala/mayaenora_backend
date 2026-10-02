@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\CourierWebhookController;
 use App\Http\Controllers\Api\V1\CustomerOrderController;
+use App\Http\Controllers\Api\V1\FooterController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SSLCommerzController;
 use App\Http\Controllers\Api\V1\UserProfileController;
@@ -37,6 +38,9 @@ Route::prefix('v1')->group(function () {
 
     // Cart
     Route::post('/cart/validate-coupon', [CartController::class, 'validateCoupon']);
+
+    // Footer (Dynamic Site & Content)
+    Route::get('/footer', [FooterController::class, 'index']);
 
     // Checkout (Supports both Guest and Authenticated users)
     Route::post('/checkout/order', [CheckoutController::class, 'order']);
