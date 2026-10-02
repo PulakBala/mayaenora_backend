@@ -22,6 +22,12 @@ class BannersTable
                     ->width(120)
                     ->height(60),
 
+                TextColumn::make('tag')
+                    ->label('Badge / Tag')
+                    ->badge()
+                    ->color('warning')
+                    ->searchable(),
+
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()

@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             CouponSeeder::class,
             CourierSettingSeeder::class,
             PaymentSettingSeeder::class,
+            BannerSeeder::class,
         ]);
     }
 }

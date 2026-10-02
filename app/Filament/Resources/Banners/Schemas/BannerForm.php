@@ -19,7 +19,12 @@ class BannerForm
             ->components([
                 Section::make('Banner Content & Media')
                     ->schema([
-                        Grid::make(2)->schema([
+                        Grid::make(3)->schema([
+                            TextInput::make('tag')
+                                ->label('Eyebrow Badge / Tag')
+                                ->placeholder('e.g. NEXT-GEN ELECTRONICS')
+                                ->maxLength(100),
+
                             TextInput::make('title')
                                 ->label('Title / Heading')
                                 ->required()
@@ -31,16 +36,15 @@ class BannerForm
                         ]),
 
                         FileUpload::make('image')
-                            ->label('Banner Graphic')
+                            ->label('Banner Graphic / Image')
                             ->image()
                             ->directory('banners')
-                            ->required()
                             ->columnSpanFull(),
 
                         Grid::make(2)->schema([
                             TextInput::make('link_url')
                                 ->label('Target Action URL')
-                                ->placeholder('/category/home-kitchen'),
+                                ->placeholder('/shop?category=electronics'),
 
                             TextInput::make('button_text')
                                 ->label('CTA Button Label')

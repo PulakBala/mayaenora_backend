@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CheckoutController;
@@ -41,6 +42,9 @@ Route::prefix('v1')->group(function () {
 
     // Footer (Dynamic Site & Content)
     Route::get('/footer', [FooterController::class, 'index']);
+
+    // Banners (Hero Slider, Promo Strip, etc.)
+    Route::get('/banners', [BannerController::class, 'index']);
 
     // Checkout (Supports both Guest and Authenticated users)
     Route::post('/checkout/order', [CheckoutController::class, 'order']);
