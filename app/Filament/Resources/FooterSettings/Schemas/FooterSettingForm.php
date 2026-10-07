@@ -29,7 +29,7 @@ class FooterSettingForm
                         Grid::make(2)->schema([
                             TextInput::make('copyright_text')
                                 ->label('Copyright Text')
-                                ->placeholder('e.g. © 2024 ELVOA. All rights reserved.')
+                                ->placeholder('e.g. © 2026 ELVOA. All rights reserved.')
                                 ->required(),
 
                             TextInput::make('bottom_slogan')

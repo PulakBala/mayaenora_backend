@@ -36,7 +36,7 @@ class FooterSetting extends Model
     {
         return static::firstOrCreate([], [
             'brand_bio' => 'Your trusted online store for everyday essentials, trending products and more.',
-            'copyright_text' => '© 2024 ELVOA. All rights reserved.',
+            'copyright_text' => '© 2026 ELVOA. All rights reserved.',
             'bottom_slogan' => 'Shop Better. Live Smarter.',
             'newsletter_title' => 'Subscribe to our newsletter',
             'newsletter_subtitle' => 'Get the latest deals and updates.',
