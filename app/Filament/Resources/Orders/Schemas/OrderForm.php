@@ -64,9 +64,11 @@ class OrderForm
                                     'packed' => 'Packed',
                                     'shipped' => 'Shipped / In Transit',
                                     'out_for_delivery' => 'Out For Delivery',
-                                    'delivered' => 'Delivered',
+                                    'delivered' => 'Delivered (Delivery Completed)',
+                                    'rejected' => 'Rejected (Customer Refused / Reject)',
                                     'cancelled' => 'Cancelled',
                                     'returned' => 'Returned',
+                                    'closed' => 'Closed / Completed',
                                 ])
                                 ->required()
                                 ->live(),
@@ -102,7 +104,20 @@ class OrderForm
                                     'pathao' => 'Pathao Courier',
                                     'redx' => 'RedX Logistics',
                                     'internal' => 'Internal Fleet',
-                                ]),
+                                    'delivery' => 'Delivery',
+                                    'reject' => 'Reject',
+                                    'closed' => 'Closed',
+                                ])
+                                ->live()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state === 'delivery') {
+                                        $set('order_status', 'delivered');
+                                    } elseif ($state === 'reject') {
+                                        $set('order_status', 'rejected');
+                                    } elseif ($state === 'closed') {
+                                        $set('order_status', 'closed');
+                                    }
+                                }),
 
                             TextInput::make('courier_tracking_code')
                                 ->label('Consignment Tracking Code / Link'),

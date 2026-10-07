@@ -165,5 +165,47 @@ class SteadfastCourierProvider implements CourierProviderInterface
             rawPayload: $payload
         );
     }
+
+    /**
+     * Query live consignment status from Steadfast API.
+     */
+    public function syncStatus(Order $order): array
+    {
+        $baseUrl = rtrim($this->setting->base_url ?: 'https://portal.steadfast.com.bd/api/v1', '/');
+
+        $trackingCode = $order->courier_tracking_code;
+        $consignmentId = $order->courier_consignment_id;
+        $invoice = $order->order_number;
+
+        if ($trackingCode) {
+            $endpoint = "{$baseUrl}/status_by_trackingcode/{$trackingCode}";
+        } elseif ($consignmentId) {
+            $endpoint = "{$baseUrl}/status_by_cid/{$consignmentId}";
+        } else {
+            $endpoint = "{$baseUrl}/status_by_invoice/{$invoice}";
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->withHeaders([
+                'Api-Key' => $this->setting->api_key,
+                'Secret-Key' => $this->setting->secret_key,
+            ])->get($endpoint);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $deliveryStatus = strtolower(trim((string) ($data['delivery_status'] ?? $data['status'] ?? '')));
+
+                return [
+                    'success' => true,
+                    'status' => $deliveryStatus,
+                    'data' => $data,
+                ];
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Steadfast syncStatus error: ' . $e->getMessage());
+        }
+
+        return ['success' => false, 'message' => 'Could not retrieve status from Steadfast Courier.'];
+    }
 }
 

@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
@@ -36,6 +38,8 @@ class User extends Authenticatable implements FilamentUser
         'two_factor_enabled',
         'status',
         'avatar',
+        'referral_code',
+        'referred_by_id',
         'metadata',
     ];
 
@@ -168,5 +172,95 @@ class User extends Authenticatable implements FilamentUser
     public function inventoryLogs(): HasMany
     {
         return $this->hasMany(InventoryLog::class, 'created_by');
+    }
+
+    /**
+     * Customer wallet for referral earnings & payouts.
+     */
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Retrieve or instantiate customer wallet.
+     */
+    public function getOrCreateWallet(): Wallet
+    {
+        return $this->wallet ?? $this->wallet()->create([
+            'balance' => 0.00,
+            'pending_balance' => 0.00,
+            'lifetime_earned' => 0.00,
+        ]);
+    }
+
+    /**
+     * The user who referred this customer.
+     */
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by_id');
+    }
+
+    /**
+     * Users referred by this customer.
+     */
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by_id');
+    }
+
+    /**
+     * Withdrawal / payout requests made by this customer.
+     */
+    public function payoutRequests(): HasMany
+    {
+        return $this->hasMany(PayoutRequest::class);
+    }
+
+    /**
+     * Commissions earned as a referrer.
+     */
+    public function referralCommissions(): HasMany
+    {
+        return $this->hasMany(ReferralCommission::class, 'referrer_id');
+    }
+
+    /**
+     * Dynamic full referral URL for sharing.
+     */
+    public function getReferralLinkAttribute(): string
+    {
+        $baseUrl = config('app.frontend_url', config('app.url', 'http://localhost:3000'));
+        return rtrim($baseUrl, '/') . '?ref=' . $this->referral_code;
+    }
+
+    /**
+     * Generate a guaranteed unique referral code.
+     */
+    public static function generateUniqueReferralCode(): string
+    {
+        do {
+            $code = 'ELV' . strtoupper(Str::random(6));
+        } while (static::where('referral_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Auto-assign unique referral code & initialize wallet on creation.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = static::generateUniqueReferralCode();
+            }
+        });
+
+        static::created(function (User $user) {
+            // Automatically initialize a wallet for the user
+            $user->getOrCreateWallet();
+        });
     }
 }

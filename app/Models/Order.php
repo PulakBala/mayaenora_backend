@@ -38,6 +38,9 @@ class Order extends Model
         'customer_notes',
         'admin_notes',
         'cancelled_reason',
+        'referrer_id',
+        'referral_commission_amount',
+        'is_referral_commission_awarded',
         'metadata',
     ];
 
@@ -53,6 +56,8 @@ class Order extends Model
             'actual_courier_cost' => 'decimal:2',
             'payment_gateway_fee' => 'decimal:2',
             'net_profit' => 'decimal:2',
+            'referral_commission_amount' => 'decimal:2',
+            'is_referral_commission_awarded' => 'boolean',
             'metadata' => 'array',
         ];
     }
@@ -63,6 +68,14 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Referrer customer who introduced this buyer.
+     */
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referrer_id');
     }
 
     /**

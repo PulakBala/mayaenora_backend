@@ -23,6 +23,15 @@ class EditOrder extends EditRecord
     protected function beforeSave(): void
     {
         $this->previousStatus = $this->record->getOriginal('order_status');
+
+        $courierPartner = $this->data['courier_partner'] ?? null;
+        if ($courierPartner === 'delivery' && ($this->data['order_status'] ?? '') !== 'delivered') {
+            $this->data['order_status'] = 'delivered';
+        } elseif ($courierPartner === 'reject' && ($this->data['order_status'] ?? '') !== 'rejected') {
+            $this->data['order_status'] = 'rejected';
+        } elseif ($courierPartner === 'closed' && ($this->data['order_status'] ?? '') !== 'closed') {
+            $this->data['order_status'] = 'closed';
+        }
     }
 
     protected function afterSave(): void
@@ -112,6 +121,30 @@ class EditOrder extends EditRecord
                     'redx' => "https://redx.com.bd/track-order?trackingId={$this->record->courier_tracking_code}",
                     default => null,
                 }, shouldOpenInNewTab: true),
+
+            Action::make('sync_courier')
+                ->label('Sync Courier Status')
+                ->icon('heroicon-m-arrow-path')
+                ->color('warning')
+                ->visible(fn () => in_array($this->record->courier_partner, ['steadfast', 'pathao', 'redx']) && ! empty($this->record->courier_tracking_code))
+                ->action(function () {
+                    $res = CourierManager::syncOrderStatus($this->record);
+                    if ($res['success']) {
+                        Notification::make()
+                            ->title('Courier Status Synced')
+                            ->body($res['message'])
+                            ->success()
+                            ->send();
+
+                        $this->refreshFormData(['order_status', 'payment_status']);
+                    } else {
+                        Notification::make()
+                            ->title('Courier Status Sync')
+                            ->body($res['message'] ?? 'Could not fetch remote status.')
+                            ->info()
+                            ->send();
+                    }
+                }),
 
             Action::make('verify_payment')
                 ->label('Verify Online Payment')

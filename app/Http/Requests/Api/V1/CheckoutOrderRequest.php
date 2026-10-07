@@ -34,6 +34,7 @@ class CheckoutOrderRequest extends FormRequest
             'delivery_method' => ['required', 'string', 'in:inside-dhaka,outside-dhaka'],
             'payment_method' => ['required', 'string', 'in:cod,sslcommerz'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
+            'referral_code' => ['nullable', 'string', 'max:50'],
             'customer_notes' => ['nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],

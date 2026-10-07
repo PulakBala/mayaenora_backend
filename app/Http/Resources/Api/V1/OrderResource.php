@@ -53,9 +53,30 @@ class OrderResource extends JsonResource
                     ];
                 })
                 : [],
+            'courier_partner' => $this->courier_partner,
+            'courier_tracking_code' => $this->courier_tracking_code,
+            'courier_tracking_url' => $this->getTrackingUrl($this->courier_partner, $this->courier_tracking_code),
+            'courier_consignment_id' => $this->courier_consignment_id,
             'customer_notes' => $this->customer_notes,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Compute public courier tracking portal URL based on partner & code.
+     */
+    protected function getTrackingUrl(?string $partner, ?string $code): ?string
+    {
+        if (! $code) {
+            return null;
+        }
+
+        return match (strtolower($partner ?? '')) {
+            'steadfast' => "https://steadfast.com.bd/t/{$code}",
+            'pathao' => "https://merchant.pathao.com/tracking?consignment_id={$code}",
+            'redx' => "https://redx.com.bd/track-order?trackingId={$code}",
+            default => null,
+        };
     }
 }
 

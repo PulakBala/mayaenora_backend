@@ -33,7 +33,17 @@ class CheckoutController extends Controller
         $user = null;
 
         $order = DB::transaction(function () use ($request, &$authToken, &$isNewUser, &$user) {
-            // 1. Resolve or Create User Account
+            // 1. Resolve Referrer
+            $referrerId = null;
+            if ($request->filled('referral_code')) {
+                $refCode = trim($request->referral_code);
+                $referrer = User::where('referral_code', $refCode)->first();
+                if ($referrer) {
+                    $referrerId = $referrer->id;
+                }
+            }
+
+            // 2. Resolve or Create User Account
             $user = $request->user('sanctum') ?? auth('sanctum')->user() ?? $request->user();
 
             if (! $user) {
@@ -54,12 +64,23 @@ class CheckoutController extends Controller
                         'phone' => $request->customer_phone,
                         'email' => $request->customer_email,
                         'password' => Hash::make($request->password),
+                        'referred_by_id' => $referrerId,
                         'status' => 'active',
                     ]);
 
                     $authToken = $user->createToken('checkout-auth')->plainTextToken;
                     $isNewUser = true;
                 }
+            }
+
+            // If user exists without a referrer, but signed up/ordered via referral link
+            if ($user && ! $user->referred_by_id && $referrerId && $user->id !== $referrerId) {
+                $user->update(['referred_by_id' => $referrerId]);
+            }
+
+            // Default to user's existing referrer if not overridden by explicit referral code
+            if (! $referrerId && $user && $user->referred_by_id) {
+                $referrerId = $user->referred_by_id;
             }
 
             // 2. Address Binding
@@ -188,6 +209,7 @@ class CheckoutController extends Controller
                 'order_number' => $orderNumber,
                 'user_id' => $user?->id,
                 'coupon_id' => $coupon?->id,
+                'referrer_id' => $referrerId,
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'customer_email' => $request->customer_email,

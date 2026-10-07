@@ -56,10 +56,11 @@ class LatestOrdersWidget extends BaseWidget
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'delivered' => 'success',
+                        'closed' => 'info',
                         'shipped', 'out_for_delivery' => 'info',
                         'processing', 'confirmed', 'packed' => 'primary',
                         'pending' => 'warning',
-                        'cancelled', 'returned' => 'danger',
+                        'cancelled', 'rejected', 'returned' => 'danger',
                         default => 'gray',
                     })
                     ->label('Fulfillment'),

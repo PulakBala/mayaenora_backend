@@ -22,11 +22,13 @@ return [
     'allowed_origins' => ['*'],
     'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', env('FRONTEND_URL', 'http://localhost:3000')))))),
 
-    'allowed_origins_patterns' => [],
     'allowed_origins_patterns' => [
         '#^https?://.*\.test(:\d+)?$#',
         '#^https?://localhost(:\d+)?$#',
         '#^https?://127\.0\.0\.1(:\d+)?$#',
+        '#^https?://.*\.elvoabd\.com$#',
+        '#^https?://elvoabd\.com$#',
+        '#^https?://.*\.signaturebd\.net$#',
     ],
 
     'allowed_headers' => ['*'],

@@ -5,10 +5,12 @@ use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CheckoutController;
+use App\Http\Controllers\Api\V1\ContactMessageController;
 use App\Http\Controllers\Api\V1\CourierWebhookController;
 use App\Http\Controllers\Api\V1\CustomerOrderController;
 use App\Http\Controllers\Api\V1\FooterController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ReferralController;
 use App\Http\Controllers\Api\V1\SSLCommerzController;
 use App\Http\Controllers\Api\V1\UserProfileController;
 use Illuminate\Http\Request;
@@ -63,6 +65,9 @@ Route::prefix('v1')->group(function () {
     // Courier Webhooks (External delivery status notifications)
     Route::post('/webhooks/courier/{provider}', [CourierWebhookController::class, 'handle'])->name('api.courier.webhook');
 
+    // Contact Form Inquiries
+    Route::post('/contact', [ContactMessageController::class, 'store'])->name('api.contact.store');
+
     // Authenticated Customer Endpoints
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -81,6 +86,14 @@ Route::prefix('v1')->group(function () {
         Route::put('/user/addresses/{id}', [UserProfileController::class, 'updateAddress']);
         Route::delete('/user/addresses/{id}', [UserProfileController::class, 'deleteAddress']);
         Route::post('/user/addresses/{id}/default', [UserProfileController::class, 'setDefaultAddress']);
+
+        // Customer Referral & Wallet
+        Route::prefix('customer/referral')->group(function () {
+            Route::get('/', [ReferralController::class, 'dashboard']);
+            Route::get('/transactions', [ReferralController::class, 'transactions']);
+            Route::get('/payouts', [ReferralController::class, 'payouts']);
+            Route::post('/payouts', [ReferralController::class, 'requestPayout']);
+        });
     });
 });
 

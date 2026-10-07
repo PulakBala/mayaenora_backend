@@ -14,7 +14,7 @@ class StoreOverviewStats extends BaseWidget
     protected function getStats(): array
     {
         $todaySales = Order::whereDate('created_at', today())
-            ->whereNotIn('order_status', ['cancelled', 'returned'])
+            ->whereNotIn('order_status', ['cancelled', 'returned', 'rejected'])
             ->sum('grand_total');
 
         $totalOrders = Order::count();

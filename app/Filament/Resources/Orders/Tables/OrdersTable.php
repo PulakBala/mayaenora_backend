@@ -64,18 +64,50 @@ class OrdersTable
                 TextColumn::make('order_status')
                     ->label('Fulfillment')
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'delivered' => 'Delivered',
+                        'rejected' => 'Rejected',
+                        'closed' => 'Closed',
+                        'cancelled' => 'Cancelled',
+                        'returned' => 'Returned',
+                        'shipped' => 'Shipped',
+                        'out_for_delivery' => 'Out For Delivery',
+                        'processing' => 'Processing',
+                        'confirmed' => 'Confirmed',
+                        'packed' => 'Packed',
+                        'pending' => 'Pending',
+                        default => ucfirst($state),
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'delivered' => 'success',
+                        'closed' => 'info',
                         'shipped', 'out_for_delivery' => 'info',
                         'processing', 'confirmed', 'packed' => 'primary',
                         'pending' => 'warning',
-                        'cancelled', 'returned' => 'danger',
+                        'cancelled', 'rejected', 'returned' => 'danger',
                         default => 'gray',
                     }),
 
                 TextColumn::make('courier_partner')
                     ->label('Courier')
                     ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'steadfast' => 'Steadfast',
+                        'pathao' => 'Pathao',
+                        'redx' => 'RedX',
+                        'internal' => 'Internal Fleet',
+                        'delivery' => 'Delivery',
+                        'reject' => 'Reject',
+                        'closed' => 'Closed',
+                        default => ucfirst($state ?? 'Unassigned'),
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'delivery' => 'success',
+                        'reject' => 'danger',
+                        'closed' => 'info',
+                        'steadfast', 'pathao', 'redx' => 'primary',
+                        default => 'gray',
+                    })
                     ->placeholder('Unassigned'),
 
                 TextColumn::make('courier_tracking_code')
@@ -99,8 +131,12 @@ class OrdersTable
                         'processing' => 'Processing',
                         'packed' => 'Packed',
                         'shipped' => 'Shipped / In Transit',
-                        'delivered' => 'Delivered',
+                        'out_for_delivery' => 'Out For Delivery',
+                        'delivered' => 'Delivered (Delivery)',
+                        'rejected' => 'Rejected (Reject)',
                         'cancelled' => 'Cancelled',
+                        'returned' => 'Returned',
+                        'closed' => 'Closed',
                     ]),
 
                 SelectFilter::make('payment_status')
@@ -118,6 +154,10 @@ class OrdersTable
                         'steadfast' => 'Steadfast Courier',
                         'pathao' => 'Pathao Courier',
                         'redx' => 'RedX Logistics',
+                        'internal' => 'Internal Fleet',
+                        'delivery' => 'Delivery',
+                        'reject' => 'Reject',
+                        'closed' => 'Closed',
                     ]),
             ])
             ->recordActions([
@@ -189,6 +229,28 @@ class OrdersTable
                         'redx' => "https://redx.com.bd/track-order?trackingId={$record->courier_tracking_code}",
                         default => null,
                     }, shouldOpenInNewTab: true),
+
+                Action::make('sync_courier')
+                    ->label('Sync Status')
+                    ->icon('heroicon-m-arrow-path')
+                    ->color('warning')
+                    ->visible(fn (Order $record) => in_array($record->courier_partner, ['steadfast', 'pathao', 'redx']) && ! empty($record->courier_tracking_code))
+                    ->action(function (Order $record) {
+                        $res = CourierManager::syncOrderStatus($record);
+                        if ($res['success']) {
+                            Notification::make()
+                                ->title('Courier Synced')
+                                ->body($res['message'])
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Courier Sync')
+                                ->body($res['message'] ?? 'Could not fetch remote status.')
+                                ->info()
+                                ->send();
+                        }
+                    }),
 
                 Action::make('verify_payment')
                     ->label('Verify Payment')

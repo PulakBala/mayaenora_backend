@@ -129,5 +129,73 @@ class CourierManager
 
         return true;
     }
+
+    /**
+     * Actively query and sync courier consignment status for a given order.
+     */
+    public static function syncOrderStatus(Order $order): array
+    {
+        $providerName = strtolower(trim((string) $order->courier_partner));
+        if (! in_array($providerName, ['steadfast', 'pathao', 'redx'])) {
+            return [
+                'success' => false,
+                'message' => "Order courier [{$providerName}] is not supported for remote status sync.",
+            ];
+        }
+
+        $provider = static::provider($providerName);
+        if (method_exists($provider, 'syncStatus')) {
+            $res = $provider->syncStatus($order);
+            if (! empty($res['success']) && ! empty($res['status'])) {
+                $rawStatus = $res['status'];
+                $orderStatus = match ($rawStatus) {
+                    'delivered', 'partial_delivered' => 'delivered',
+                    'in_transit', 'picked_up' => 'shipped',
+                    'out_for_delivery' => 'out_for_delivery',
+                    'cancelled' => 'cancelled',
+                    'returned' => 'returned',
+                    'hold', 'in_review' => 'processing',
+                    default => $order->order_status,
+                };
+
+                $updates = [];
+                if ($orderStatus !== $order->order_status) {
+                    $updates['order_status'] = $orderStatus;
+                }
+                if (in_array($rawStatus, ['delivered', 'partial_delivered']) && $order->payment_status !== 'paid') {
+                    $updates['payment_status'] = 'paid';
+                }
+
+                if (! empty($updates)) {
+                    $order->update($updates);
+
+                    OrderStatusHistory::create([
+                        'order_id' => $order->id,
+                        'status' => $order->order_status,
+                        'comment' => "Status refreshed from {$providerName} API ({$rawStatus}).",
+                        'notified_customer' => false,
+                        'updated_by' => auth()->id(),
+                        'created_at' => now(),
+                    ]);
+                }
+
+                return [
+                    'success' => true,
+                    'message' => "Courier status synced: [{$rawStatus}]. Current order status: [{$order->order_status}].",
+                    'status' => $order->order_status,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $res['message'] ?? 'Courier returned no status update.',
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => "Status query is not implemented for [{$providerName}].",
+        ];
+    }
 }
 

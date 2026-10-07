@@ -23,5 +23,7 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production') || request()->header('X-Forwarded-Proto') === 'https') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
+        \App\Models\Order::observe(\App\Observers\OrderObserver::class);
     }
 }

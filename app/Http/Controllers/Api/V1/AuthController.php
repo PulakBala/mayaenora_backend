@@ -42,12 +42,22 @@ class AuthController extends Controller
 
         $customerRoleId = Role::where('slug', 'customer')->value('id') ?? 1;
 
+        $referrerId = null;
+        if ($request->filled('referral_code')) {
+            $refCode = trim($request->referral_code);
+            $referrer = User::where('referral_code', $refCode)->first();
+            if ($referrer) {
+                $referrerId = $referrer->id;
+            }
+        }
+
         $user = User::create([
             'role_id' => $customerRoleId,
             'name' => trim($request->name),
             'phone' => $request->filled('phone') ? trim($request->phone) : null,
             'email' => $request->filled('email') ? strtolower(trim($request->email)) : null,
             'password' => Hash::make($request->password),
+            'referred_by_id' => $referrerId,
             'status' => 'active',
         ]);
 

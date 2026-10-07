@@ -14,7 +14,7 @@ class ProfitLossWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $validOrders = Order::whereNotIn('order_status', ['cancelled', 'returned']);
+        $validOrders = Order::whereNotIn('order_status', ['cancelled', 'returned', 'rejected']);
 
         $grossProfit = (float) $validOrders->sum(DB::raw('subtotal_amount - total_product_cost'));
         $courierCosts = (float) $validOrders->sum('actual_courier_cost');

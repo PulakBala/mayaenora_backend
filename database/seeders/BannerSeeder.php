@@ -56,3 +56,4 @@ class BannerSeeder extends Seeder
         }
     }
 }
+
