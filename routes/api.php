@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ContactMessageController;
 use App\Http\Controllers\Api\V1\CourierWebhookController;
 use App\Http\Controllers\Api\V1\CustomerOrderController;
 use App\Http\Controllers\Api\V1\FooterController;
+use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReferralController;
 use App\Http\Controllers\Api\V1\SSLCommerzController;
@@ -30,6 +31,14 @@ Route::prefix('v1')->group(function () {
     // Customer Authentication (Public)
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+
+    // Google Social Authentication
+    Route::prefix('auth/google')->group(function () {
+        Route::get('/redirect', [GoogleAuthController::class, 'redirect']);
+        Route::get('/callback', [GoogleAuthController::class, 'callback']);
+        Route::post('/', [GoogleAuthController::class, 'verifyToken']);
+        Route::post('/verify', [GoogleAuthController::class, 'verifyToken']);
+    });
 
     // Categories
     Route::get('/categories/tree', [CategoryController::class, 'tree']);
