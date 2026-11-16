@@ -28,7 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('ELVOA Enterprise')
+            ->brandName('Maya Enora Enterprise')
             ->sidebarCollapsibleOnDesktop()
             ->colors([
                 'primary' => Color::hex('#FF5B37'),

@@ -56,5 +56,21 @@ class Category extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    /**
+     * Auto-invalidate category tree and home sections cache.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('api_home_sections_v1');
+            \Illuminate\Support\Facades\Cache::forget('api_category_tree_v1');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('api_home_sections_v1');
+            \Illuminate\Support\Facades\Cache::forget('api_category_tree_v1');
+        });
+    }
 }
 

@@ -36,7 +36,7 @@ class FooterSetting extends Model
     {
         return static::firstOrCreate([], [
             'brand_bio' => 'Your trusted online store for everyday essentials, trending products and more.',
-            'copyright_text' => '© 2026 ELVOA. All rights reserved.',
+            'copyright_text' => '© 2026 Maya Enora. All rights reserved.',
             'bottom_slogan' => 'Shop Better. Live Smarter.',
             'newsletter_title' => 'Subscribe to our newsletter',
             'newsletter_subtitle' => 'Get the latest deals and updates.',
@@ -47,7 +47,7 @@ class FooterSetting extends Model
                 ['platform' => 'youtube', 'title' => 'YouTube', 'url' => 'https://youtube.com', 'is_active' => true],
                 ['platform' => 'tiktok', 'title' => 'TikTok', 'url' => 'https://tiktok.com', 'is_active' => true],
             ],
-            'contact_email' => 'support@elvoa.com',
+            'contact_email' => 'support@mayaenora.com',
             'contact_phone' => '+880 9610-000000',
             'contact_address' => 'House #12, Road #4, Dhanmondi, Dhaka-1205, Bangladesh',
         ]);

@@ -28,7 +28,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'mini-electric-food-chopper-250ml',
                 'base_sku' => 'ELV-CHOP-01',
                 'short_description' => 'Rechargeable wireless garlic and vegetable mini processor with sharp stainless blades.',
-                'description' => 'The ELVOA Mini Electric Food Chopper is the ultimate portable food processor for kitchen essentials. Equipped with 3 food-grade stainless steel blades, one-touch button operation, and USB fast charging.',
+                'description' => 'The Maya Enora Mini Electric Food Chopper is the ultimate portable food processor for kitchen essentials. Equipped with 3 food-grade stainless steel blades, one-touch button operation, and USB fast charging.',
                 'base_cost_price' => 320.00,
                 'base_selling_price' => 729.00,
                 'discount_price' => 499.00,

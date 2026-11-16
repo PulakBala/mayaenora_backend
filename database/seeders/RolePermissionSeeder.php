@@ -108,8 +108,8 @@ class RolePermissionSeeder extends Seeder
         // Super Admin
         User::create([
             'role_id' => $adminRole->id,
-            'name' => 'ELVOA Administrator',
-            'email' => 'admin@elvoa.com',
+            'name' => 'Maya Enora Administrator',
+            'email' => 'admin@mayaenora.com',
             'phone' => '01700000000',
             'email_verified_at' => now(),
             'phone_verified_at' => now(),
@@ -122,7 +122,7 @@ class RolePermissionSeeder extends Seeder
         User::create([
             'role_id' => $managerRole->id,
             'name' => 'Sabbir Rahman',
-            'email' => 'manager@elvoa.com',
+            'email' => 'manager@mayaenora.com',
             'phone' => '01711111111',
             'email_verified_at' => now(),
             'phone_verified_at' => now(),

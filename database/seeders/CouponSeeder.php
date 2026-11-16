@@ -10,7 +10,7 @@ class CouponSeeder extends Seeder
     public function run(): void
     {
         Coupon::create([
-            'code' => 'ELVOA10',
+            'code' => 'MAYA10',
             'type' => 'percent',
             'discount_value' => 10.00,
             'min_order_amount' => 500.00,

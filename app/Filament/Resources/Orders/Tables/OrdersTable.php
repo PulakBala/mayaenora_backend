@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Tables;
 
+use App\Filament\Resources\Products\ProductResource;
 use App\Models\CourierSetting;
 use App\Models\Order;
 use App\Services\Courier\CourierManager;
@@ -22,6 +23,7 @@ class OrdersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with(['items.product.primaryImage', 'items.product.images']))
             ->columns([
                 TextColumn::make('order_number')
                     ->label('Order #')
@@ -34,6 +36,78 @@ class OrdersTable
                     ->label('Customer')
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('ordered_products')
+                    ->label('Ordered Product(s)')
+                    ->html()
+                    ->searchable(query: function ($query, string $search) {
+                        $query->whereHas('items', function ($itemQuery) use ($search) {
+                            $itemQuery->where('product_name', 'like', "%{$search}%")
+                                ->orWhere('variant_details', 'like', "%{$search}%");
+                        });
+                    })
+                    ->state(function (Order $record): string {
+                        $items = $record->items;
+                        if (! $items || $items->isEmpty()) {
+                            return '<span class="text-xs text-gray-400 italic">No products</span>';
+                        }
+
+                        $html = '<div class="flex flex-col gap-2 py-1 min-w-[200px] max-w-[320px]">';
+                        $frontendBase = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
+
+                        foreach ($items as $item) {
+                            $product = $item->product;
+                            $adminUrl = $product ? ProductResource::getUrl('edit', ['record' => $product]) : null;
+                            $frontendUrl = ($product && $product->slug) ? "{$frontendBase}/products/{$product->slug}" : null;
+
+                            $imgSrc = $product?->primaryImage?->image_url
+                                ?? $product?->primaryImage?->image_path
+                                ?? $product?->images?->first()?->image_url
+                                ?? $product?->images?->first()?->image_path;
+
+                            $imgHtml = '';
+                            if ($imgSrc) {
+                                $imgUrl = (str_starts_with($imgSrc, 'http://') || str_starts_with($imgSrc, 'https://'))
+                                    ? $imgSrc
+                                    : asset(str_starts_with($imgSrc, '/') ? ltrim($imgSrc, '/') : 'storage/' . $imgSrc);
+                                $imgHtml = '<img src="' . e($imgUrl) . '" alt="" class="w-8 h-8 rounded-md object-cover border border-gray-200 dark:border-gray-700 shrink-0" />';
+                            }
+
+                            $productTitle = e($item->product_name ?: ($product?->title ?? 'Product'));
+                            $variant = $item->variant_details ? '<span class="text-[11px] text-gray-500 font-normal">(' . e($item->variant_details) . ')</span>' : '';
+                            $qty = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">×' . ((int) $item->quantity) . '</span>';
+
+                            $html .= '<div class="flex items-center gap-2 text-xs leading-snug">';
+                            if ($imgHtml) {
+                                $html .= $imgHtml;
+                            }
+                            $html .= '<div class="flex-1 min-w-0">';
+                            $html .= '<div class="flex items-center gap-1.5 flex-wrap">';
+                            $html .= $qty;
+
+                            if ($adminUrl) {
+                                $html .= '<a href="' . $adminUrl . '" target="_blank" class="font-semibold text-primary-600 hover:text-primary-800 hover:underline dark:text-primary-400 dark:hover:text-primary-300 transition-colors" title="View / Edit in Admin Panel">' . $productTitle . '</a>';
+                            } else {
+                                $html .= '<span class="font-semibold text-gray-800 dark:text-gray-200">' . $productTitle . '</span>';
+                            }
+
+                            if ($frontendUrl) {
+                                $html .= '<a href="' . $frontendUrl . '" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 inline-flex items-center" title="View Live on Store">';
+                                $html .= '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>';
+                                $html .= '</a>';
+                            }
+
+                            $html .= '</div>';
+                            if ($variant) {
+                                $html .= '<div class="text-[11px] text-gray-500 dark:text-gray-400">' . $variant . '</div>';
+                            }
+                            $html .= '</div>';
+                            $html .= '</div>';
+                        }
+
+                        $html .= '</div>';
+                        return $html;
+                    }),
 
                 TextColumn::make('customer_phone')
                     ->label('Phone')

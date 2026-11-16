@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Orders\Schemas;
 
+use App\Filament\Resources\Products\ProductResource;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -135,7 +137,23 @@ class OrderForm
                                 TextInput::make('product_name')
                                     ->label('Product Title')
                                     ->required()
-                                    ->columnSpan(2),
+                                    ->columnSpan(2)
+                                    ->suffixActions([
+                                        Action::make('open_product_admin')
+                                            ->icon('heroicon-m-arrow-top-right-on-square')
+                                            ->tooltip('Open Product Details in Admin')
+                                            ->url(fn ($record) => $record?->product ? ProductResource::getUrl('edit', ['record' => $record->product]) : null, shouldOpenInNewTab: true)
+                                            ->visible(fn ($record) => (bool) ($record?->product_id)),
+                                        Action::make('open_product_store')
+                                            ->icon('heroicon-m-globe-alt')
+                                            ->color('gray')
+                                            ->tooltip('View Live on Customer Store')
+                                            ->url(function ($record) {
+                                                $frontend = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
+                                                return ($record?->product && $record->product->slug) ? "{$frontend}/products/{$record->product->slug}" : null;
+                                            }, shouldOpenInNewTab: true)
+                                            ->visible(fn ($record) => (bool) ($record?->product?->slug)),
+                                    ]),
 
                                 TextInput::make('variant_details')
                                     ->label('Variant (Size/Color)'),

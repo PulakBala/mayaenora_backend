@@ -10,7 +10,7 @@ class BrandSeeder extends Seeder
     public function run(): void
     {
         $brands = [
-            ['name' => 'ELVOA Studio', 'slug' => 'elvoa-studio'],
+            ['name' => 'Maya Enora Studio', 'slug' => 'maya-enora-studio'],
             ['name' => 'Baseus', 'slug' => 'baseus'],
             ['name' => 'Xiaomi Ecosystem', 'slug' => 'xiaomi'],
             ['name' => 'Joyroom', 'slug' => 'joyroom'],

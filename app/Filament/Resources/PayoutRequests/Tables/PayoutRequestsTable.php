@@ -112,7 +112,7 @@ class PayoutRequestsTable
 
                         Textarea::make('admin_notes')
                             ->label('Optional Processing Note')
-                            ->placeholder('e.g. Sent from ELVOA Corporate bKash account'),
+                            ->placeholder('e.g. Sent from Maya Enora Corporate bKash account'),
                     ])
                     ->action(function (PayoutRequest $record, array $data) {
                         app(ReferralService::class)->approvePayout(

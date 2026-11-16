@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReferralController;
 use App\Http\Controllers\Api\V1\SSLCommerzController;
+use App\Http\Controllers\Api\V1\ThemeController;
 use App\Http\Controllers\Api\V1\UserProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
 
     // Products
+    Route::get('/products/home-sections', [ProductController::class, 'homeSections']);
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
 
@@ -53,6 +55,9 @@ Route::prefix('v1')->group(function () {
 
     // Footer (Dynamic Site & Content)
     Route::get('/footer', [FooterController::class, 'index']);
+
+    // Theme & Colors (Dynamic Header, Footer, Button & Body Background)
+    Route::get('/theme', [ThemeController::class, 'show']);
 
     // Banners (Hero Slider, Promo Strip, etc.)
     Route::get('/banners', [BannerController::class, 'index']);

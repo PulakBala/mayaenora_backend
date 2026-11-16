@@ -83,23 +83,23 @@ class Banner extends Model
     {
         static::saving(function (Banner $banner) {
             // Keep image and desktop_image in sync
-            if (! empty($banner->image) && empty($banner->desktop_image)) {
+            if ($banner->isDirty('image') || (! empty($banner->image) && empty($banner->desktop_image))) {
                 $banner->desktop_image = $banner->image;
-            } elseif (empty($banner->image) && ! empty($banner->desktop_image)) {
+            } elseif ($banner->isDirty('desktop_image') || (! empty($banner->desktop_image) && empty($banner->image))) {
                 $banner->image = $banner->desktop_image;
             }
 
             // Keep link_url and target_url in sync
-            if (! empty($banner->link_url) && empty($banner->target_url)) {
+            if ($banner->isDirty('link_url') || (! empty($banner->link_url) && empty($banner->target_url))) {
                 $banner->target_url = $banner->link_url;
-            } elseif (empty($banner->link_url) && ! empty($banner->target_url)) {
+            } elseif ($banner->isDirty('target_url') || (! empty($banner->target_url) && empty($banner->link_url))) {
                 $banner->link_url = $banner->target_url;
             }
 
             // Keep placement and position in sync
-            if (! empty($banner->placement) && empty($banner->position)) {
+            if ($banner->isDirty('placement') || (! empty($banner->placement) && empty($banner->position))) {
                 $banner->position = $banner->placement === 'hero_slider' ? 'top_slider' : $banner->placement;
-            } elseif (empty($banner->placement) && ! empty($banner->position)) {
+            } elseif ($banner->isDirty('position') || (! empty($banner->position) && empty($banner->placement))) {
                 $banner->placement = $banner->position === 'top_slider' ? 'hero_slider' : $banner->position;
             }
 
@@ -109,6 +109,18 @@ class Banner extends Model
             } elseif (! empty($banner->status)) {
                 $banner->is_active = ($banner->status === 'active');
             }
+        });
+
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('api_banners_hero_slider');
+            \Illuminate\Support\Facades\Cache::forget('api_banners_all');
+            \Illuminate\Support\Facades\Cache::forget('api_banners_');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('api_banners_hero_slider');
+            \Illuminate\Support\Facades\Cache::forget('api_banners_all');
+            \Illuminate\Support\Facades\Cache::forget('api_banners_');
         });
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Resources\Api\V1\CategoryTreeResource;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -16,27 +17,32 @@ class CategoryController extends Controller
      */
     public function tree(Request $request): JsonResponse
     {
-        $categories = Category::query()
-            ->whereNull('parent_id')
-            ->where('status', 'active')
-            ->orderBy('sort_order', 'asc')
-            ->with([
-                'children' => function ($query) {
-                    $query->where('status', 'active')
-                        ->orderBy('sort_order', 'asc')
-                        ->withCount(['products' => function ($pq) {
-                            $pq->where('is_published', true);
-                        }]);
-                },
-            ])
-            ->withCount(['products' => function ($pq) {
-                $pq->where('is_published', true);
-            }])
-            ->get();
+        $cacheKey = 'api_category_tree_v1';
+        $data = Cache::remember($cacheKey, now()->addMinutes(30), function () {
+            $categories = Category::query()
+                ->whereNull('parent_id')
+                ->where('status', 'active')
+                ->orderBy('sort_order', 'asc')
+                ->with([
+                    'children' => function ($query) {
+                        $query->where('status', 'active')
+                            ->orderBy('sort_order', 'asc')
+                            ->withCount(['products' => function ($pq) {
+                                $pq->where('is_published', true);
+                            }]);
+                    },
+                ])
+                ->withCount(['products' => function ($pq) {
+                    $pq->where('is_published', true);
+                }])
+                ->get();
+
+            return CategoryTreeResource::collection($categories)->resolve();
+        });
 
         return response()->json([
             'success' => true,
-            'data' => CategoryTreeResource::collection($categories),
+            'data' => $data,
         ]);
     }
 

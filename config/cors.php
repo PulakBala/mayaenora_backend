@@ -26,6 +26,8 @@ return [
         '#^https?://.*\.test(:\d+)?$#',
         '#^https?://localhost(:\d+)?$#',
         '#^https?://127\.0\.0\.1(:\d+)?$#',
+        '#^https?://.*\.mayaenora\.com$#',
+        '#^https?://mayaenora\.com$#',
         '#^https?://.*\.elvoabd\.com$#',
         '#^https?://elvoabd\.com$#',
         '#^https?://.*\.signaturebd\.net$#',

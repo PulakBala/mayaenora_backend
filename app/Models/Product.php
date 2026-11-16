@@ -129,5 +129,19 @@ class Product extends Model
     {
         return $this->hasMany(PurchaseItem::class);
     }
+
+    /**
+     * Auto-invalidate home sections cache when products change.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('api_home_sections_v1');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('api_home_sections_v1');
+        });
+    }
 }
 

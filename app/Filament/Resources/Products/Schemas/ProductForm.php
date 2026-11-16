@@ -252,7 +252,7 @@ class ProductForm
                             ->schema([
                                 TextInput::make('meta_title')
                                     ->label('SEO Meta Title')
-                                    ->placeholder('e.g. Mini Electric Food Chopper 250ml | ELVOA Store'),
+                                    ->placeholder('e.g. Mini Electric Food Chopper 250ml | Maya Enora Store'),
 
                                 Textarea::make('meta_description')
                                     ->label('SEO Meta Description')

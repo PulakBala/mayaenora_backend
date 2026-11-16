@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\FooterSection;
 use App\Models\FooterSetting;
+use App\Models\ThemeSetting;
 use Illuminate\Http\JsonResponse;
 
 class FooterController extends Controller
@@ -42,6 +43,8 @@ class FooterController extends Controller
                 ];
             });
 
+        $theme = ThemeSetting::getSettings();
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -58,6 +61,17 @@ class FooterController extends Controller
                     'contact_address' => $settings->contact_address,
                 ],
                 'sections' => $sections,
+                'theme' => [
+                    'header_bg_color' => $theme->header_bg_color ?: '#ffffff',
+                    'header_text_color' => $theme->header_text_color ?: '#111827',
+                    'footer_bg_color' => $theme->footer_bg_color ?: '#111827',
+                    'footer_text_color' => $theme->footer_text_color ?: '#d1d5db',
+                    'button_bg_color' => $theme->button_bg_color ?: '#FF5B37',
+                    'button_hover_color' => $theme->button_hover_color ?: '#eb4e2a',
+                    'button_text_color' => $theme->button_text_color ?: '#ffffff',
+                    'body_bg_color' => $theme->body_bg_color ?: '#ffffff',
+                    'is_active' => (bool) $theme->is_active,
+                ],
             ],
         ]);
     }

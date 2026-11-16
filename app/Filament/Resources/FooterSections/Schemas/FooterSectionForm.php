@@ -23,7 +23,7 @@ class FooterSectionForm
                                 ->label('Column Title')
                                 ->required()
                                 ->maxLength(100)
-                                ->placeholder('e.g. Shop, Customer Care, About ELVOA'),
+                                ->placeholder('e.g. Shop, Customer Care, About Maya Enora'),
 
                             TextInput::make('sort_order')
                                 ->label('Display Order')

@@ -9,10 +9,102 @@ use App\Http\Resources\Api\V1\ProductListResource;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
+    /**
+     * Get optimized, consolidated home page product sections in a single request.
+     * Caches formatted data to ensure instant sub-10ms response times.
+     */
+    public function homeSections(): JsonResponse
+    {
+        $cacheKey = 'api_home_sections_v1';
+        $data = Cache::remember($cacheKey, now()->addMinutes(15), function () {
+            $withRelations = [
+                'category:id,name,slug',
+                'brand:id,name,slug',
+                'primaryImage',
+                'images',
+                'variants',
+                'approvedReviews',
+            ];
+
+            $baseQuery = fn () => Product::query()
+                ->where('is_published', true)
+                ->with($withRelations);
+
+            // 1. Trending / Hot Products (Featured items)
+            $trending = $baseQuery()
+                ->where('is_featured', true)
+                ->orderByDesc('id')
+                ->take(8)
+                ->get();
+
+            if ($trending->isEmpty()) {
+                $trending = $baseQuery()
+                    ->orderByDesc('id')
+                    ->take(8)
+                    ->get();
+            }
+
+            // 2. Festive & Wedding Edit
+            $festiveCategory = Category::where('slug', 'womens-collection')
+                ->orWhere('slug', 'festive')
+                ->first();
+
+            if ($festiveCategory) {
+                $categoryIds = $festiveCategory->children()->pluck('id')->push($festiveCategory->id);
+                $festive = $baseQuery()
+                    ->whereIn('category_id', $categoryIds)
+                    ->orderByDesc('id')
+                    ->take(8)
+                    ->get();
+            } else {
+                $festive = collect();
+            }
+
+            if ($festive->isEmpty()) {
+                $festive = $baseQuery()
+                    ->orderByDesc('is_featured')
+                    ->orderByDesc('id')
+                    ->take(8)
+                    ->get();
+            }
+
+            // 3. New Season Arrivals
+            $newArrivals = $baseQuery()
+                ->orderByDesc('id')
+                ->take(8)
+                ->get();
+
+            // 4. Boutique Best Sellers
+            $bestSellers = $baseQuery()
+                ->withCount('orderItems')
+                ->orderByDesc('order_items_count')
+                ->orderByDesc('id')
+                ->take(8)
+                ->get();
+
+            if ($bestSellers->isEmpty()) {
+                $bestSellers = $newArrivals;
+            }
+
+            return [
+                'trending' => ProductListResource::collection($trending)->resolve(),
+                'featured' => ProductListResource::collection($festive)->resolve(),
+                'new_arrivals' => ProductListResource::collection($newArrivals)->resolve(),
+                'best_sellers' => ProductListResource::collection($bestSellers)->resolve(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
     /**
      * Get paginated product catalog with dynamic multi-faceted filters.
      */
